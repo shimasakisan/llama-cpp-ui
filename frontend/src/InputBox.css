@@ -1,18 +1,22 @@
 .InputWrapper {
     background-color: #f3f6fc;
     margin: 20px 0;
-    padding: 80px 20px 40px 20px;
-    border-radius: 24px;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    align-content: center;
+    justify-content: space-between;
 }
 
 .InputBox {
-    display: block;
-    margin: 0 auto;
+    display: inline-block;
     width: 100%;
+    font-size: 1.2em;
     font-family: acarisans;
     font-weight: 700;
-    font-size: 120px;
-    line-height: 120px;
+    letter-spacing: -0.05em;
     background-color: transparent;
     border: none;
 }
@@ -24,6 +28,7 @@
 .Button {
     border: 0;
     background-color: rgb(27, 130, 248);
+    margin-left: 10px;
     padding: 10px 24px;
     border-radius: 7px;
     color: white;

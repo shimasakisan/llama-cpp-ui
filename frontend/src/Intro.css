@@ -1,0 +1,20 @@
+.Intro {
+    margin: 40px 0px;
+}
+
+.Intro .Header {
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+    font-family: acarisans;
+    font-weight: 700;
+    font-size: 140px;
+    letter-spacing: -0.05em;
+    line-height: 130px;
+    background-color: transparent;
+    border: none;
+}
+
+.Intro .Header .Main {
+    color: #111;
+}

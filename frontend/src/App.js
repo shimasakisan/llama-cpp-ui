@@ -1,20 +1,46 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import InputBox from './InputBox';
 import TopBar from './TopBar';
 import Conversation from './Conversation';
 import ConversationStep from './ConversationStep';
+import Intro from './Intro';
+import AutoScrollWrapper from './AutoScrollWrapper';
 
 
 const defaultConversation = { title: 'Empty chat', steps: [] };
 
 function App() {
+  const scrollRef = useRef(null);
+  
   const [input, setInput] = useState("");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [isBusy, setIsBusy] = useState(false);
   const [conversation, setConversation] = useState(defaultConversation);
-  
+
+  useEffect(() => {
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    scrollRef.current.scroll({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth"
+    });
+  }, []);
+
+  function onResponseFinished(question, answer) {
+    setConversation(prev => ({
+      ...prev,
+      steps: [ ...prev.steps, {question, answer}]
+    }));
+    setAnswer("");
+    setQuestion("");
+  }
+
+  function onResponseUpdate(previousChunk, newChunk) {
+    const lastItem = scrollRef.current.lastElementChild;
+    lastItem.scrollIntoView({ behavior: "smooth" });
+    return previousChunk + ' ' + newChunk;
+  }
 
   async function handleSubmit() {
     setIsBusy(true);
@@ -27,29 +53,28 @@ function App() {
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
-        setConversation(prev => ({
-          ...prev,
-          steps: [ ...prev.steps, {question: input, answer: tmpAnswer}]
-        }));
-        setAnswer("");
-        setQuestion("");
+        onResponseFinished(input, tmpAnswer);
         break;
       }
-      const text = new TextDecoder().decode(value);
-      tmpAnswer += ' ' + text;
+      const newChunk = new TextDecoder().decode(value);
+      tmpAnswer = onResponseUpdate(tmpAnswer, newChunk);
       setAnswer(tmpAnswer);
     }
     setIsBusy(false);
   }
 
+  
 
   return (
-    <div className="App">
-      <TopBar title={conversation.title} />
-      <Conversation conversation={conversation} />
-      {isBusy && <ConversationStep question={question} answer={answer} />}
-      <InputBox value={input} onChange={e => setInput(e.target.value)} onSubmit={handleSubmit} />
-    </div>
+    <AutoScrollWrapper>
+      <div ref={scrollRef} className="App">
+        <TopBar title={conversation.title} />
+        <Intro />
+        <Conversation conversation={conversation} />
+        {isBusy && <ConversationStep question={question} answer={answer} />}
+        <InputBox value={input} onChange={e => setInput(e.target.value)} onSubmit={handleSubmit} />
+      </div>
+    </AutoScrollWrapper>
   );
 }
 

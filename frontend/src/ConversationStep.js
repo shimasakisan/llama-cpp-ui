@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import './ConversationStep.css';
 
-
 function ConversationItem({children, imageUrl, color = "#888"}) {
     return (
         <div className="Row">

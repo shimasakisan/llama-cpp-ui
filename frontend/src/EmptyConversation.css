@@ -1,0 +1,12 @@
+.EmptyConversation {
+    font-family: acarisans;
+    max-width: 90%;
+    font-size: 1.1em;
+    color: #111;
+    margin-bottom: 50px;
+    margin-left: 16px;
+}
+
+.EmptyConversation .Second {
+    font-weight: 700;
+}

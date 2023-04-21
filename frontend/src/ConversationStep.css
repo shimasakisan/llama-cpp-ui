@@ -33,6 +33,7 @@
     /* border: 1px solid #00000083; */
     width: 24px;
     height: 24px;
+    min-width: 24px;
     border-radius: 50%;
     margin-right: 10px;
 }
