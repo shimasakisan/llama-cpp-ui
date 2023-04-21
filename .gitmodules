@@ -1,3 +1,6 @@
 [submodule "server/third-party/cpp-httplib"]
 	path = server/third-party/cpp-httplib
 	url = https://github.com/yhirose/cpp-httplib
+[submodule "server/third-party/llama.cpp"]
+	path = server/third-party/llama.cpp
+	url = https://github.com/ggerganov/llama.cpp
