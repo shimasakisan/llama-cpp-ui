@@ -10,14 +10,14 @@ void handle_chat(const httplib::Request& req, httplib::Response& res) {
 
     // Stream response
     res.set_header("Access-Control-Allow-Origin", "*");
-    res.set_header("Access-Control-Allow-Methods", "GET, POST");
+    res.set_header("Access-Control-Allow-Methods", "POST");
     res.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
     // Streaming reponse
     res.set_chunked_content_provider(
         "text/plain",
         [req](size_t offset, httplib::DataSink& sink) {
-            std::string input = "split this string by spaces split this string by spaces split this string by spaces split this string by spaces " + req.body;
+            std::string input = " \n\n ```\n  public void main() {\n    return 0;\n  }\n```\n\n and the the result: \n\n" + req.body;
             std::stringstream ss(input);
 
             std::string word;
