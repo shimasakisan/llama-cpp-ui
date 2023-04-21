@@ -1,0 +1,13 @@
+.TopBar {
+    margin: 20px 0 40px 0;
+    font-family: acarisans;
+}
+
+.TopBar .Logo {
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+.TopBar .Logo .Main {
+    color: #000;
+}

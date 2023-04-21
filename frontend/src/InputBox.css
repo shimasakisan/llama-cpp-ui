@@ -1,0 +1,39 @@
+.InputWrapper {
+    background-color: #f3f6fc;
+    margin: 20px 0;
+    padding: 80px 20px 40px 20px;
+    border-radius: 24px;
+}
+
+.InputBox {
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+    font-family: acarisans;
+    font-weight: 700;
+    font-size: 120px;
+    line-height: 120px;
+    background-color: transparent;
+    border: none;
+}
+
+.InputBox:focus {
+    outline: none;
+}
+
+.Button {
+    border: 0;
+    background-color: rgb(27, 130, 248);
+    padding: 10px 24px;
+    border-radius: 7px;
+    color: white;
+    font-weight: 700;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+.Button:focus {
+    outline: none;
+}
+
+

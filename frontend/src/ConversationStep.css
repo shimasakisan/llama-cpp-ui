@@ -1,0 +1,46 @@
+.Row {
+    display: flex;
+    flex-direction: row;
+}
+
+
+.Conversation {
+    margin: 10px 0;
+}
+
+.Question {
+    font-family: acarisans;
+    font-weight: 700;
+    color: #222;
+    background-color: #e6ecf8;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.Answer {
+    font-family: acarisans;
+    font-weight: 400;
+    background-color: #e6ecf8;
+    color: #555;
+    padding: 1px 20px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+
+.Conversation .Avatar {
+    /* border: 1px solid #00000083; */
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.Conversation .Answer .Avatar {
+    margin-top: 12px;
+}
+
+.Conversation .Question .Content {
+    margin-top: 5px;
+}
