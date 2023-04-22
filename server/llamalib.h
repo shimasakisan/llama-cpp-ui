@@ -17,6 +17,7 @@ public:
 
 private:
 	bool is_reverse_prompt();
+	void check_context();
 
 	llama_context* mCtx = NULL;
 	gpt_params* mParams = NULL;

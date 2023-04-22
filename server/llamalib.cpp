@@ -51,9 +51,14 @@ void LlamaSession::release_model() {
 
 int LlamaSession::process_prompt(const std::string& input, bool include_pre_suffix) {
 
+    if (input.empty()) {
+        return 0;
+    }
+
     std::vector<llama_token> input_tokens = ::llama_tokenize(mCtx, input, true);
 
     // TODO: partition in batches of mParams.batch_size
+    check_context();
     if (llama_eval(mCtx, input_tokens.data(), input_tokens.size(), mNPast, mParams->n_threads)) {
         fprintf(stderr, "%s : failed to eval\n", __func__);
         return 1;
@@ -67,7 +72,7 @@ int LlamaSession::process_prompt(const std::string& input, bool include_pre_suff
 const char *LlamaSession::predict_next_token() {
 
     // TODO: Lock on some mutex or maybe just return in case another request is being processed.
-
+    check_context();
     if (llama_eval(mCtx, &(mLastTokens->back()), 1, mNPast, mParams->n_threads)) {
         fprintf(stderr, "%s : failed to eval\n", __func__);
         return NULL;
@@ -84,7 +89,7 @@ const char *LlamaSession::predict_next_token() {
             mParams->temp, mParams->repeat_penalty);
 
         mLastTokens->erase(mLastTokens->begin());
-        mLastTokens->push_back(predicted_token);
+        mLastTokens->push_back(predicted_token);        
         mNPast++;
     }
 
@@ -119,4 +124,11 @@ const char *LlamaSession::predict_next_token() {
 bool LlamaSession::is_reverse_prompt() {
     // Check lastTokens if they contain the reverse prompt.
     return false;
+}
+
+void LlamaSession::check_context() {
+    int context_size = llama_n_ctx(mCtx);
+    if (mNPast >= context_size) {
+        mNPast = context_size - 1;
+    }
 }
