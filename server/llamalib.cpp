@@ -49,14 +49,12 @@ void LlamaSession::release_model() {
     if (mLastTokens != NULL) delete(mLastTokens);
 }
 
-int LlamaSession::process_initial_prompt(std::string& input) {
-
-    // Prepare the model with initial context.
+int LlamaSession::process_prompt(const std::string& input, bool include_pre_suffix) {
 
     std::vector<llama_token> input_tokens = ::llama_tokenize(mCtx, input, true);
 
     // TODO: partition in batches of mParams.batch_size
-    if (llama_eval(mCtx, input_tokens.data(), input_tokens.size(), 0, mParams->n_threads)) {
+    if (llama_eval(mCtx, input_tokens.data(), input_tokens.size(), mNPast, mParams->n_threads)) {
         fprintf(stderr, "%s : failed to eval\n", __func__);
         return 1;
     }
@@ -92,15 +90,17 @@ const char *LlamaSession::predict_next_token() {
 
     // Check for EOS or report the new token
     if (predicted_token == llama_token_eos()) {
-        printf("[+] END OF TEXT");
+        printf("\n[+] END OF TEXT\n");
         return NULL;
     }
     else {
-        //printf("[+] EMIT TOKEN: %s\n", llama_token_to_str(ctx, predicted_token));
         auto predicted_text = llama_token_to_str(mCtx, predicted_token);
         printf("%s", predicted_text);
             
-        // Check if the reverse prompt is present. If so, report end (callback)
+        if (is_reverse_prompt()) {
+            printf("\n[+] REVERSE PROMPT\n");
+            return NULL;
+        }
         
         return predicted_text;
 
@@ -116,3 +116,7 @@ const char *LlamaSession::predict_next_token() {
     return 0;
 }
 
+bool LlamaSession::is_reverse_prompt() {
+    // Check lastTokens if they contain the reverse prompt.
+    return false;
+}

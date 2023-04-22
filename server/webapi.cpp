@@ -12,50 +12,64 @@ LlamaSession* currentSession = NULL;
 void set_cors_headers(httplib::Response& res)
 {
     res.set_header("Access-Control-Allow-Origin", "*");
-    res.set_header("Access-Control-Allow-Methods", "POST");
+    res.set_header("Access-Control-Allow-Methods", "GET,POST");
     res.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 
 void handle_chat(const httplib::Request& req, httplib::Response& res) {
-    // Get request message
-
-
-    // Stream response
+    
     set_cors_headers(res);
 
-    // Streaming reponse
+    // Stream response
     res.set_chunked_content_provider(
         "text/plain",
         [req](size_t offset, httplib::DataSink& sink) {
-            //std::string input = "split this string by spaces split this string by spaces split this string by spaces split this string by spaces " + req.body;
-            //std::stringstream ss(input);
 
-            /*std::string word;
-            while (ss >> word) {
-                sink.write(word.c_str(), word.length());
-                std::this_thread::sleep_for(std::chrono::milliseconds(80));
-            }*/
+            //auto prompt = "<|prompter|>" + req.body + "<|assistant|>";
+            auto prompt = req.body;
 
-            /*int res = process_prompt(params, ctx, params.prompt, [](char* text) {
+            fprintf(stderr, "[+] Processing prompt: '%s'\n", prompt.c_str());
+            currentSession->process_prompt(prompt, false);
 
-                });
-            if (res > 0) {
-                fprintf(stderr, "Process prompt returned error");
-            }*/
-
+            fprintf(stderr, "[+] Generating response:\n");
             const char* token;
             while (true) {
                 token = currentSession->predict_next_token();
-                if (token == NULL) break;
+                if (token == NULL) {
+                    break;
+                }
 
                 sink.write(token, strlen(token));
             }
 
             sink.done();
-            return true; // return 'false' if you want to cancel the process.
+            return true;
         }
     );
 }
+
+void handle_test(const httplib::Request& req, httplib::Response& res) {
+    
+    set_cors_headers(res);
+
+
+    // Stream response
+    res.set_chunked_content_provider(
+        "text/plain",
+        [req](size_t offset, httplib::DataSink& sink) {
+
+            for (int i = 1; i < 200; i++) {
+                std::string b("Base ");
+                sink.write(b.c_str(), b.size());
+                std::this_thread::sleep_for(std::chrono::milliseconds(30));
+            }
+
+            sink.done();
+            return true;
+        }
+    );
+}
+
 
 void handle_status(const httplib::Request& req, httplib::Response& res) {
     set_cors_headers(res);
@@ -76,6 +90,7 @@ void setup_http_server(httplib::Server& svr) {
     // Endpoints
     svr.Post("/chat", handle_chat);
     svr.Get("/status", handle_status);
+    svr.Post("/test", handle_test);
 }
 
 int main(int argc, char** argv) {
@@ -91,7 +106,7 @@ int main(int argc, char** argv) {
         return 12;
     }
 
-    res = session.process_initial_prompt(params.prompt);
+    res = session.process_prompt(params.prompt, false);
     if (res > 0) {
         fprintf(stderr, "Process initial prompt returned error");
         return 13;

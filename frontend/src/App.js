@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import './App.css';
 import InputBox from './InputBox';
 import TopBar from './TopBar';
@@ -11,21 +11,11 @@ import AutoScrollWrapper from './AutoScrollWrapper';
 const defaultConversation = { title: 'Empty chat', steps: [] };
 
 function App() {
-  const scrollRef = useRef(null);
-  
   const [input, setInput] = useState("");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [isBusy, setIsBusy] = useState(false);
   const [conversation, setConversation] = useState(defaultConversation);
-
-  useEffect(() => {
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    scrollRef.current.scroll({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth"
-    });
-  }, []);
 
   function onResponseFinished(question, answer) {
     setConversation(prev => ({
@@ -37,9 +27,7 @@ function App() {
   }
 
   function onResponseUpdate(previousChunk, newChunk) {
-    const lastItem = scrollRef.current.lastElementChild;
-    lastItem.scrollIntoView({ behavior: "smooth" });
-    return previousChunk + ' ' + newChunk;
+    return previousChunk + newChunk;
   }
 
   async function handleSubmit() {
@@ -67,7 +55,7 @@ function App() {
 
   return (
     <AutoScrollWrapper>
-      <div ref={scrollRef} className="App">
+      <div className="App">
         <TopBar title={conversation.title} />
         <Intro />
         <Conversation conversation={conversation} />

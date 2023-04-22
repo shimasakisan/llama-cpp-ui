@@ -2,11 +2,29 @@ import React, { useState } from 'react';
 import './InputBox.css';
 
 
-export default function InputBox({value, onChange, onSubmit}) {
-   return (
-    <div className="InputWrapper">
-        <input className="InputBox" spellCheck="false" placeholder='What is the question?' value={value} onChange={onChange}></input>
-        <button className="Button" onClick={onSubmit}>Send</button>
-    </div>
-   )
+export default function InputBox({ value, onChange, onSubmit }) {
+
+    function handleKeyPress(event) {
+        if (event.key === "Enter" && event.shiftKey) {
+            // Shift + Enter is pressed
+            // Insert newline in the textbox
+          } else if (event.key === "Enter") {
+            // Only Enter is pressed
+            onSubmit();
+          }
+    }
+
+
+    return (
+        <div className="InputWrapper">
+            <input 
+                className="InputBox" 
+                spellCheck="false" 
+                placeholder='What is the question?' 
+                value={value} 
+                onChange={onChange} 
+                onKeyDown={handleKeyPress}></input>
+            <button className="Button" onClick={onSubmit}>Send</button>
+        </div>
+    )
 }

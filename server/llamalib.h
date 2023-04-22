@@ -11,11 +11,13 @@ public:
 	LlamaSession(gpt_params* params) : mParams(params) {};
 
 	int load_model();
-	int process_initial_prompt(std::string& input);
+	int process_prompt(const std::string& input, bool include_pre_suffix);
 	const char* predict_next_token();
 	void release_model();
 
 private:
+	bool is_reverse_prompt();
+
 	llama_context* mCtx = NULL;
 	gpt_params* mParams = NULL;
 	std::vector<llama_token>* mLastTokens = NULL;
