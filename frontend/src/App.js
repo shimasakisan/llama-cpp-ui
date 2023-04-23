@@ -36,7 +36,7 @@ function App() {
     setAnswer("...");
     setInput("");
     let tmpAnswer = "";
-    const response = await fetch(endPoint + '/test', { method: "POST", body: input });
+    const response = await fetch(endPoint + '/chat', { method: "POST", body: input });
     const reader = response.body.getReader();
     while (true) {
       const { done, value } = await reader.read();
