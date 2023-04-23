@@ -5,25 +5,25 @@ int LlamaSession::load_model() {
     // load the model
     auto llama_params = llama_context_default_params();
 
-    llama_params.n_ctx = mParams->n_ctx;
-    llama_params.n_parts = mParams->n_parts;
-    llama_params.seed = mParams->seed;
-    llama_params.f16_kv = mParams->memory_f16;
-    llama_params.use_mmap = mParams->use_mmap;
-    llama_params.use_mlock = mParams->use_mlock;
+    llama_params.n_ctx = m_params->n_ctx;
+    llama_params.n_parts = m_params->n_parts;
+    llama_params.seed = m_params->seed;
+    llama_params.f16_kv = m_params->memory_f16;
+    llama_params.use_mmap = m_params->use_mmap;
+    llama_params.use_mlock = m_params->use_mlock;
 
-    mCtx = llama_init_from_file(mParams->model.c_str(), llama_params);
+    m_ctx = llama_init_from_file(m_params->model.c_str(), llama_params);
         
-    if (mCtx == NULL) {
-        fprintf(stderr, "%s: error: failed to load model '%s'\n", __func__, mParams->model.c_str());
+    if (m_ctx == NULL) {
+        fprintf(stderr, "%s: error: failed to load model '%s'\n", __func__, m_params->model.c_str());
         return 10;
     }
 
-    if (!mParams->lora_adapter.empty()) {
-        int err = llama_apply_lora_from_file(mCtx,
-            mParams->lora_adapter.c_str(),
-            mParams->lora_base.empty() ? NULL : mParams->lora_base.c_str(),
-            mParams->n_threads);
+    if (!m_params->lora_adapter.empty()) {
+        int err = llama_apply_lora_from_file(m_ctx,
+            m_params->lora_adapter.c_str(),
+            m_params->lora_base.empty() ? NULL : m_params->lora_base.c_str(),
+            m_params->n_threads);
         if (err != 0) {
             fprintf(stderr, "%s: error: failed to apply lora adapter\n", __func__);
             return 11;
@@ -34,19 +34,19 @@ int LlamaSession::load_model() {
     {
         fprintf(stderr, "\n");
         fprintf(stderr, "system_info: n_threads = %d / %d | %s\n",
-            mParams->n_threads, std::thread::hardware_concurrency(), llama_print_system_info());
+            m_params->n_threads, std::thread::hardware_concurrency(), llama_print_system_info());
     }
 
-    if (mLastTokens != NULL) delete(mLastTokens);
-    mLastTokens = new std::vector<llama_token>(llama_n_ctx(mCtx));
-    std::fill(mLastTokens->begin(), mLastTokens->end(), 0);
+    if (m_last_tokens != NULL) delete(m_last_tokens);
+    m_last_tokens = new std::vector<llama_token>(llama_n_ctx(m_ctx));
+    std::fill(m_last_tokens->begin(), m_last_tokens->end(), 0);
 
     return 0;
 }
 
 void LlamaSession::release_model() {
-    llama_free(mCtx);
-    if (mLastTokens != NULL) delete(mLastTokens);
+    llama_free(m_ctx);
+    if (m_last_tokens != NULL) delete(m_last_tokens);
 }
 
 int LlamaSession::process_prompt(const std::string& input, bool include_pre_suffix) {
@@ -55,16 +55,16 @@ int LlamaSession::process_prompt(const std::string& input, bool include_pre_suff
         return 0;
     }
 
-    std::vector<llama_token> input_tokens = ::llama_tokenize(mCtx, input, true);
+    std::vector<llama_token> input_tokens = ::llama_tokenize(m_ctx, input, true);
 
     // TODO: partition in batches of mParams.batch_size
     check_context();
-    if (llama_eval(mCtx, input_tokens.data(), input_tokens.size(), mNPast, mParams->n_threads)) {
+    if (llama_eval(m_ctx, input_tokens.data(), input_tokens.size(), m_num_past_tokens, m_params->n_threads)) {
         fprintf(stderr, "%s : failed to eval\n", __func__);
         return 1;
     }
 
-    mNPast += input_tokens.size();
+    m_num_past_tokens += input_tokens.size();
 
     return 0;
 }
@@ -73,7 +73,7 @@ const char *LlamaSession::predict_next_token() {
 
     // TODO: Lock on some mutex or maybe just return in case another request is being processed.
     check_context();
-    if (llama_eval(mCtx, &(mLastTokens->back()), 1, mNPast, mParams->n_threads)) {
+    if (llama_eval(m_ctx, &(m_last_tokens->back()), 1, m_num_past_tokens, m_params->n_threads)) {
         fprintf(stderr, "%s : failed to eval\n", __func__);
         return NULL;
     }
@@ -83,14 +83,14 @@ const char *LlamaSession::predict_next_token() {
     // llama_sample_top_p_top_k to select the token given the specified temperature, topK, topP and repeat params.
     // TODO: receive those as params
     {
-        predicted_token = llama_sample_top_p_top_k(mCtx,
-            mLastTokens->data() + llama_n_ctx(mCtx) - mParams->repeat_last_n,
-            mParams->repeat_last_n, mParams->top_k, mParams->top_p,
-            mParams->temp, mParams->repeat_penalty);
+        predicted_token = llama_sample_top_p_top_k(m_ctx,
+            m_last_tokens->data() + llama_n_ctx(m_ctx) - m_params->repeat_last_n,
+            m_params->repeat_last_n, m_params->top_k, m_params->top_p,
+            m_params->temp, m_params->repeat_penalty);
 
-        mLastTokens->erase(mLastTokens->begin());
-        mLastTokens->push_back(predicted_token);        
-        mNPast++;
+        m_last_tokens->erase(m_last_tokens->begin());
+        m_last_tokens->push_back(predicted_token);        
+        m_num_past_tokens++;
     }
 
     // Check for EOS or report the new token
@@ -99,7 +99,7 @@ const char *LlamaSession::predict_next_token() {
         return NULL;
     }
     else {
-        auto predicted_text = llama_token_to_str(mCtx, predicted_token);
+        auto predicted_text = llama_token_to_str(m_ctx, predicted_token);
         printf("%s", predicted_text);
             
         if (is_reverse_prompt()) {
@@ -127,8 +127,8 @@ bool LlamaSession::is_reverse_prompt() {
 }
 
 void LlamaSession::check_context() {
-    int context_size = llama_n_ctx(mCtx);
-    if (mNPast >= context_size) {
-        mNPast = context_size - 1;
+    int context_size = llama_n_ctx(m_ctx);
+    if (m_num_past_tokens >= context_size) {
+        m_num_past_tokens = context_size - 1;
     }
 }
