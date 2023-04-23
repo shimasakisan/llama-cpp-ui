@@ -15,6 +15,9 @@ public:
 	const char* predict_next_token();
 	void release_model();
 
+	std::string m_prompt_prefix = "";
+	std::string m_prompt_suffix = "";
+
 private:
 	bool is_reverse_prompt();
 	void check_context();

@@ -1,5 +1,6 @@
 #include "third-party/cpp-httplib/httplib.h"
 #include "llamalib.h"
+#include "webutils.h"
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -76,7 +77,7 @@ void handle_status(const httplib::Request& req, httplib::Response& res) {
     res.body = "{ \"status\": \"ok\" }";
 }
 
-void setup_http_server(httplib::Server& svr) {
+void setup_http_server(httplib::Server& svr, webapi_params& webparams) {
 
     // CORS preflight OPTIONS handler
     svr.Options("/*", [](const httplib::Request& req, httplib::Response& res) {
@@ -88,15 +89,23 @@ void setup_http_server(httplib::Server& svr) {
         });
 
     // Endpoints
-    svr.Post("/chat", handle_chat);
-    svr.Get("/status", handle_status);
-    svr.Post("/test", handle_test);
+    svr.Post("/chat",   handle_chat);
+    svr.Post("/test",   handle_test);
+    svr.Get("/status",  handle_status);
+
+    // File server
+    if (!webparams.public_directory.empty()) {
+        svr.set_mount_point("/", webparams.public_directory);
+    }
 }
 
 int main(int argc, char** argv) {
 
     gpt_params params;
     if (gpt_params_parse(argc, argv, params) == false) return 11;
+
+    webapi_params webparams;
+    parse_webapi_params(argc, argv, webparams);
 
     LlamaSession session(&params);
 
@@ -120,7 +129,7 @@ int main(int argc, char** argv) {
 
     httplib::Server svr;
 
-    setup_http_server(svr);
+    setup_http_server(svr, webparams);
 
     std::cout << "Listening on port 8080\n";
     svr.listen("127.0.0.1", 8080);
