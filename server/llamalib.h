@@ -11,7 +11,7 @@ public:
 	LlamaSession(gpt_params* params) : m_params(params) {};
 
 	int load_model();
-	int process_prompt(const std::string& input, bool include_pre_suffix);
+	int process_prompt(const std::string& input);
 	const char* predict_next_token();
 	void release_model();
 
@@ -20,7 +20,7 @@ public:
 
 private:
 	bool is_reverse_prompt();
-	void check_context();
+	void check_past_tokens();
 
 	llama_context* m_ctx = NULL;
 	gpt_params* m_params = NULL;

@@ -7,7 +7,7 @@ import ConversationStep from './ConversationStep';
 import Intro from './Intro';
 import AutoScrollWrapper from './AutoScrollWrapper';
 
-
+const endPoint = 'http://localhost:8080';
 const defaultConversation = { title: 'Empty chat', steps: [] };
 
 function App() {
@@ -36,7 +36,7 @@ function App() {
     setAnswer("...");
     setInput("");
     let tmpAnswer = "";
-    const response = await fetch('http://localhost:8080/chat', { method: "POST", body: input });
+    const response = await fetch(endPoint + '/test', { method: "POST", body: input });
     const reader = response.body.getReader();
     while (true) {
       const { done, value } = await reader.read();
@@ -51,7 +51,11 @@ function App() {
     setIsBusy(false);
   }
 
-  
+  async function handleCancel() {
+    const res = await fetch(endPoint + '/cancel');
+    // TODO: Check response
+    setIsBusy(false);
+  }
 
   return (
     <AutoScrollWrapper>
@@ -60,7 +64,8 @@ function App() {
         <Intro />
         <Conversation conversation={conversation} />
         {isBusy && <ConversationStep question={question} answer={answer} />}
-        <InputBox value={input} onChange={e => setInput(e.target.value)} onSubmit={handleSubmit} />
+        <InputBox value={input} onChange={e => setInput(e.target.value)} onSubmit={handleSubmit} disabled={isBusy} />
+        {isBusy && <button onClick={handleCancel} className="Button">Cancel generation</button> }
       </div>
     </AutoScrollWrapper>
   );

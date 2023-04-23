@@ -1,8 +1,6 @@
 #include "llamalib.h"
 
 int LlamaSession::load_model() {
-
-    // load the model
     auto llama_params = llama_context_default_params();
 
     llama_params.n_ctx = m_params->n_ctx;
@@ -15,7 +13,7 @@ int LlamaSession::load_model() {
     m_ctx = llama_init_from_file(m_params->model.c_str(), llama_params);
         
     if (m_ctx == NULL) {
-        fprintf(stderr, "%s: error: failed to load model '%s'\n", __func__, m_params->model.c_str());
+        fprintf(stderr, "[!] Failed to load model '%s'\n", m_params->model.c_str());
         return 10;
     }
 
@@ -25,7 +23,7 @@ int LlamaSession::load_model() {
             m_params->lora_base.empty() ? NULL : m_params->lora_base.c_str(),
             m_params->n_threads);
         if (err != 0) {
-            fprintf(stderr, "%s: error: failed to apply lora adapter\n", __func__);
+            fprintf(stderr, "[!] Failed to apply lora adapter\n");
             return 11;
         }
     }
@@ -33,14 +31,14 @@ int LlamaSession::load_model() {
     // print system information
     {
         fprintf(stderr, "\n");
-        fprintf(stderr, "system_info: n_threads = %d / %d | %s\n",
+        fprintf(stderr, "[+] System info: n_threads = %d / %d | %s\n",
             m_params->n_threads, std::thread::hardware_concurrency(), llama_print_system_info());
     }
 
     if (m_last_tokens != NULL) delete(m_last_tokens);
     m_last_tokens = new std::vector<llama_token>(llama_n_ctx(m_ctx));
     std::fill(m_last_tokens->begin(), m_last_tokens->end(), 0);
-
+    
     return 0;
 }
 
@@ -49,18 +47,25 @@ void LlamaSession::release_model() {
     if (m_last_tokens != NULL) delete(m_last_tokens);
 }
 
-int LlamaSession::process_prompt(const std::string& input, bool include_pre_suffix) {
-
+int LlamaSession::process_prompt(const std::string& input) {
     if (input.empty()) {
+        fprintf(stderr, "[-] Prompt is empty, continue generation with \n");
         return 0;
     }
 
-    std::vector<llama_token> input_tokens = ::llama_tokenize(m_ctx, input, true);
+    int context_size = llama_n_ctx(m_ctx);
+    std::string full_input = m_prompt_prefix + input + m_prompt_suffix;
+
+    std::vector<llama_token> input_tokens = ::llama_tokenize(m_ctx, full_input, true);
+    if (input_tokens.size() > context_size) {
+        fprintf(stderr, "[!] Prompt is too long (%d > %d)\n", (int)input_tokens.size(), context_size);
+        return 2;
+    }
 
     // TODO: partition in batches of mParams.batch_size
-    check_context();
+    check_past_tokens();
     if (llama_eval(m_ctx, input_tokens.data(), input_tokens.size(), m_num_past_tokens, m_params->n_threads)) {
-        fprintf(stderr, "%s : failed to eval\n", __func__);
+        fprintf(stderr, "[!] Failed to eval\n");
         return 1;
     }
 
@@ -70,17 +75,15 @@ int LlamaSession::process_prompt(const std::string& input, bool include_pre_suff
 }
 
 const char *LlamaSession::predict_next_token() {
-
     // TODO: Lock on some mutex or maybe just return in case another request is being processed.
-    check_context();
+    check_past_tokens();
     if (llama_eval(m_ctx, &(m_last_tokens->back()), 1, m_num_past_tokens, m_params->n_threads)) {
-        fprintf(stderr, "%s : failed to eval\n", __func__);
+        fprintf(stderr, "[!] Failed to eval\n");
         return NULL;
     }
 
     llama_token predicted_token = 0;
 
-    // llama_sample_top_p_top_k to select the token given the specified temperature, topK, topP and repeat params.
     // TODO: receive those as params
     {
         predicted_token = llama_sample_top_p_top_k(m_ctx,
@@ -98,37 +101,26 @@ const char *LlamaSession::predict_next_token() {
         printf("\n[+] END OF TEXT\n");
         return NULL;
     }
-    else {
-        auto predicted_text = llama_token_to_str(m_ctx, predicted_token);
-        printf("%s", predicted_text);
+
+    auto predicted_text = llama_token_to_str(m_ctx, predicted_token);
+    printf("%s", predicted_text);
             
-        if (is_reverse_prompt()) {
-            printf("\n[+] REVERSE PROMPT\n");
-            return NULL;
-        }
-        
-        return predicted_text;
-
-        // ring the embeddings if context size reached, otherwise just add
-        //current_batch.push_back(predicted_token);
-        /*if (input_tokens.size() > context_size) {
-            fprintf(stderr, "Reached end of context size");
-            break;
-        }*/
-
+    if (is_reverse_prompt()) {
+        printf("\n[+] REVERSE PROMPT\n");
+        return NULL;
     }
-
-    return 0;
+        
+    return predicted_text;
 }
 
 bool LlamaSession::is_reverse_prompt() {
-    // Check lastTokens if they contain the reverse prompt.
+    // Check latest tokens if they contain the reverse prompt.
     return false;
 }
 
-void LlamaSession::check_context() {
-    int context_size = llama_n_ctx(m_ctx);
-    if (m_num_past_tokens >= context_size) {
-        m_num_past_tokens = context_size - 1;
+void LlamaSession::check_past_tokens() {
+    int max_past_tokens = llama_n_ctx(m_ctx) - 4;
+    if (m_num_past_tokens > max_past_tokens) {
+        m_num_past_tokens = max_past_tokens;
     }
 }

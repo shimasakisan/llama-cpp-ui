@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './InputBox.css';
 
 
-export default function InputBox({ value, onChange, onSubmit }) {
+export default function InputBox({ value, onChange, onSubmit, disabled }) {
 
     function handleKeyPress(event) {
         if (event.key === "Enter" && event.shiftKey) {
@@ -24,7 +24,7 @@ export default function InputBox({ value, onChange, onSubmit }) {
                 value={value} 
                 onChange={onChange} 
                 onKeyDown={handleKeyPress}></input>
-            <button className="Button" onClick={onSubmit}>Send</button>
+            <button disabled={disabled} className="Button" onClick={onSubmit}>Send</button>
         </div>
     )
 }
