@@ -45,3 +45,56 @@
 .Conversation .Question .Content {
     margin-top: 5px;
 }
+
+/* Three dots animation */
+
+.WaitAnimation {
+    position: relative;
+    margin: 20px 0px 19px 16px;
+}
+
+.dot-flashing {
+    position: relative;
+    width: 7px;
+    height: 7px;
+    border-radius: 5px;
+    background-color: #8280ff;
+    color: #8280ff;
+    animation: dot-flashing 1s infinite linear alternate;
+    animation-delay: 0.4s;
+}
+.dot-flashing::before, .dot-flashing::after {
+    content: "";
+    display: inline-block;
+    position: absolute;
+    top: 0;
+}
+.dot-flashing::before {
+    left: -12px;
+    width: 7px;
+    height: 7px;
+    border-radius: 5px;
+    background-color: #8082ff;
+    color: #8280ff;
+    animation: dot-flashing 1s infinite alternate;
+    animation-delay: 0s;
+}
+.dot-flashing::after {
+    left: 12px;
+    width: 7px;
+    height: 7px;
+    border-radius: 5px;
+    background-color: #809eff;
+    color: #8280ff;
+    animation: dot-flashing 1s infinite alternate;
+    animation-delay: 0.8s;
+}
+
+@keyframes dot-flashing {
+    0% {
+        background-color: #8280ff;
+    }
+    50%, 100% {
+        background-color: #8280ff33;
+    }
+}

@@ -16,6 +16,7 @@ function App() {
   const [answer, setAnswer] = useState("");
   const [isBusy, setIsBusy] = useState(false);
   const [conversation, setConversation] = useState(defaultConversation);
+  const [waiting, setWaiting] = useState(true);
 
   function onResponseFinished(question, answer) {
     setConversation(prev => ({
@@ -27,6 +28,7 @@ function App() {
   }
 
   function onResponseUpdate(previousChunk, newChunk) {
+    setWaiting(false);
     return previousChunk + newChunk;
   }
 
@@ -34,6 +36,7 @@ function App() {
     setIsBusy(true);
     setQuestion(input);
     setAnswer("...");
+    setWaiting(true);
     setInput("");
     let tmpAnswer = "";
     const response = await fetch(endPoint + '/chat', { method: "POST", body: input });
@@ -61,11 +64,14 @@ function App() {
     <AutoScrollWrapper>
       <div className="App">
         <TopBar title={conversation.title} />
-        <Intro />
-        <Conversation conversation={conversation} />
-        {isBusy && <ConversationStep question={question} answer={answer} />}
-        <InputBox value={input} onChange={e => setInput(e.target.value)} onSubmit={handleSubmit} disabled={isBusy} />
-        {isBusy && <button onClick={handleCancel} className="Button">Cancel generation</button> }
+        <div className='Container'>
+          <Intro />
+          <Conversation conversation={conversation} />
+          {isBusy && <ConversationStep question={question} answer={answer} waiting={waiting}/>}
+          {isBusy && <button onClick={handleCancel} className="Button">Cancel generation</button> }
+          <InputBox value={input} onChange={e => setInput(e.target.value)} onSubmit={handleSubmit} disabled={isBusy} />
+          
+        </div>
       </div>
     </AutoScrollWrapper>
   );

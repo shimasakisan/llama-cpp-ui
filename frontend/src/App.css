@@ -2,3 +2,8 @@
   color: #80868b;
   margin: 24px;
 }
+
+.App .Container {
+  margin: 0 auto;
+  max-width: 1000px;
+}

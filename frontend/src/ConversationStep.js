@@ -15,7 +15,7 @@ function ConversationItem({children, imageUrl, color = "#888"}) {
     )
 }
 
-export default function ConversationStep({question, answer}) {
+export default function ConversationStep({question, answer, waiting}) {
     return (
         <div className="Conversation">
             <div className="Question">
@@ -25,7 +25,13 @@ export default function ConversationStep({question, answer}) {
             </div>
             <div className="Answer">
                 <ConversationItem color="#FFF">
-                    <ReactMarkdown>{answer}</ReactMarkdown>
+                    {waiting ? 
+                        <div className="WaitAnimation">
+                            <div className="dot-flashing"></div>
+                        </div>
+                    :                
+                        <ReactMarkdown>{answer}</ReactMarkdown>
+                    }
                 </ConversationItem>
             </div>
         </div>
