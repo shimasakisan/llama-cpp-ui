@@ -7,6 +7,7 @@ const messages = [
     <><span className="Main">Revolutionize</span> your chat experience with llama.cpp.</>,
     <><span className="Main">Join</span> the llama.cpp revolution.</>,
     <><span className="Main">Empower</span> your chat with llama.cpp.</>,
+    <><span className="Main">llama.cpp:</span> inference on the edge.</>,
 ]
 
 

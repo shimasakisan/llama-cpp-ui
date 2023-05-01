@@ -92,6 +92,20 @@ $ npm run build
 
 The output ready to be published will be generated in a new `build` directory. 
 
+
+# Sample invocations
+
+```
+--model C:\Users\dsuar\Documents\develop\llama.cpp\models\oasst\llama-13b-pretrained-sft-do2-ggml-q4.bin  --temp 0.1 --threads 8 --ctx_size 2048  --system_prompt "<|system|>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown." --prompt_prefix "<|prompter|>"  --prompt_suffix "<|assistant|>
+
+third-party\llama.cpp\examples\main\Release\main.exe --model C:\Users\dsuar\Documents\develop\llama.cpp\models\oasst\llama-13b-pretrained-sft-do2-ggml-q4.bin  --temp 0.1 --threads 8 --ctx_size 2048  --prompt "<|system|>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown.<|prompter|>"  --color --interactive --reverse-prompt "<|prompter|>" --n_predict -1
+
+webapi.exe --model F:\models\oasst\openassistant-llama-30b-ggml-q4_1.bin  --temp 0.5 --threads 8 --ctx_size 2048  --system_prompt "<|system|>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown." --prompt_prefix "<|user|>"  --prompt_suffix "<|assistant|>"
+
+--model F:\models\oasst\llama-13b-pretrained-sft-do2-ggml-q4.bin  --temp 0.5 --threads 8 --ctx_size 2048  --system_prompt "<|system|>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown.<|prompter|>What's the capital of France<|assistant|>Paris<|prompter|>" --prompt_suffix "<|assistant|>
+
+```
+
 # TO DO
 
 * How to build the single file for the app.

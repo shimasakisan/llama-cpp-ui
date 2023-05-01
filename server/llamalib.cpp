@@ -75,7 +75,6 @@ int LlamaSession::process_prompt(const std::string& input) {
 }
 
 const char *LlamaSession::predict_next_token() {
-    // TODO: Lock on some mutex or maybe just return in case another request is being processed.
     check_past_tokens();
     if (llama_eval(m_ctx, &(m_last_tokens->back()), 1, m_num_past_tokens, m_params->n_threads)) {
         fprintf(stderr, "[!] Failed to eval\n");
@@ -84,12 +83,22 @@ const char *LlamaSession::predict_next_token() {
 
     llama_token predicted_token = 0;
 
-    // TODO: receive those as params
     {
-        predicted_token = llama_sample_top_p_top_k(m_ctx,
-            m_last_tokens->data() + llama_n_ctx(m_ctx) - m_params->repeat_last_n,
-            m_params->repeat_last_n, m_params->top_k, m_params->top_p,
-            m_params->temp, m_params->repeat_penalty);
+        // TODO: This is the most basic sampling possible: use at least temp, top_k, top_p
+        auto logits = llama_get_logits(m_ctx);
+        auto n_vocab = llama_n_vocab(m_ctx);
+        std::vector<llama_token_data> candidates;
+        candidates.reserve(n_vocab);
+        for (llama_token token_id = 0; token_id < n_vocab; token_id++) {
+            candidates.emplace_back(llama_token_data{ token_id, logits[token_id], 0.0f });
+        }
+        llama_token_data_array candidates_p = { candidates.data(), candidates.size(), false };
+        predicted_token = llama_sample_token(m_ctx, &candidates_p);
+        
+        //predicted_token = llama_sample_top_p_top_k(m_ctx,
+        //    m_last_tokens->data() + llama_n_ctx(m_ctx) - m_params->repeat_last_n,
+        //    m_params->repeat_last_n, m_params->top_k, m_params->top_p,
+        //    m_params->temp, m_params->repeat_penalty);
 
         m_last_tokens->erase(m_last_tokens->begin());
         m_last_tokens->push_back(predicted_token);        
@@ -111,6 +120,18 @@ const char *LlamaSession::predict_next_token() {
     }
         
     return predicted_text;
+}
+
+
+void LlamaSession::serialize_state(std::ostream output_stream) {
+    // Save the current llama_state, model_name, m_last_tokens, m_num_past_tokens
+    // Should be enough to quickly load a previous conversation in context.
+
+    // Could save all the conversation under the same filename (not here) for logging purposes.
+}
+
+void LlamaSession::deserialize_state(std::istream input_stream) {
+
 }
 
 bool LlamaSession::is_reverse_prompt() {

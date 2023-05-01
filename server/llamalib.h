@@ -3,7 +3,7 @@
 #include "llama.h"
 #include "common.h"
 #include <functional>
-
+#include <fstream>
 
 class LlamaSession {
 
@@ -14,6 +14,9 @@ public:
 	int process_prompt(const std::string& input);
 	const char* predict_next_token();
 	void release_model();
+
+	void deserialize_state(std::istream input_stream);
+	void serialize_state(std::ostream output_stream);
 
 	std::string m_prompt_prefix = "";
 	std::string m_prompt_suffix = "";
