@@ -13,7 +13,7 @@
     font-weight: 700;
     color: #222;
     background-color: #e6ecf8;
-    padding: 15px 20px;
+    padding: 15px 15px;
     border-radius: 10px;
     margin-bottom: 10px;
 }
@@ -97,4 +97,15 @@
     50%, 100% {
         background-color: #8280ff33;
     }
+}
+
+
+.Markdown pre {
+    background-color: #312e2910;
+    padding: 12px 14px;
+    border-radius: 7px;
+}
+
+.Markdown code {
+    color: #000;
 }

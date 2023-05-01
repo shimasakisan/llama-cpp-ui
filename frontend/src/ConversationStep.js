@@ -30,7 +30,7 @@ export default function ConversationStep({question, answer, waiting}) {
                             <div className="dot-flashing"></div>
                         </div>
                     :                
-                        <ReactMarkdown>{answer}</ReactMarkdown>
+                        <ReactMarkdown className='Markdown'>{answer}</ReactMarkdown>
                     }
                 </ConversationItem>
             </div>
