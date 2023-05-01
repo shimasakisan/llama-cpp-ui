@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './InputBox.css';
 
 
@@ -20,7 +20,7 @@ export default function InputBox({ value, onChange, onSubmit, disabled }) {
             <input 
                 className="InputBox" 
                 spellCheck="false" 
-                placeholder='What is the question?' 
+                placeholder="What's on your mind?"
                 value={value} 
                 onChange={onChange} 
                 onKeyDown={handleKeyPress}></input>
