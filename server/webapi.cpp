@@ -7,6 +7,7 @@
 #include <thread>
 #include <common.h>
 #include "webapi.h"
+#include "../frontend/build/index_html.hpp"
 
 LlamaSession* currentSession = NULL;
 bool generation_in_progress = false;
@@ -106,6 +107,12 @@ void handle_status(const httplib::Request& req, httplib::Response& res) {
     res.set_content("{ \"status\": \"ok\" }", "application/json");
 }
 
+void handle_index_html(const httplib::Request& req, httplib::Response& res) {
+    set_cors_headers(res);
+    //res.set_header("Content-type", "gzip");
+    res.set_content(INDEX_HTML_CONTENT, "text/html");
+}
+
 void setup_http_server(httplib::Server& svr, webapi_params& webparams) {
 
     // CORS preflight OPTIONS handler
@@ -122,11 +129,12 @@ void setup_http_server(httplib::Server& svr, webapi_params& webparams) {
     svr.Post("/test",   handle_test);
     svr.Get("/status",  handle_status);
     svr.Get("/cancel",  handle_cancel);
+    svr.Get("/", handle_index_html);
 
     // File server
-    if (!webparams.public_directory.empty()) {
+    /*if (!webparams.public_directory.empty()) {
         svr.set_mount_point("/", webparams.public_directory);
-    }
+    }*/
 }
 
 int main(int argc, char** argv) {
