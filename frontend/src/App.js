@@ -55,8 +55,8 @@ function App() {
   }
 
   async function handleCancel() {
-    const res = await fetch(endPoint + '/cancel');
     // TODO: Check response
+    await fetch(endPoint + '/cancel');
     setIsBusy(false);
   }
 

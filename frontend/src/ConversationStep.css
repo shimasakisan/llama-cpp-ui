@@ -9,7 +9,6 @@
 }
 
 .Question {
-    font-family: acarisans;
     font-weight: 700;
     color: #222;
     background-color: #e6ecf8;
@@ -19,7 +18,6 @@
 }
 
 .Answer {
-    font-family: acarisans;
     font-weight: 400;
     background-color: #e6ecf8;
     color: #555;
@@ -43,7 +41,7 @@
 }
 
 .Conversation .Question .Content {
-    margin-top: 5px;
+    margin-top: 2px;
 }
 
 /* Three dots animation */

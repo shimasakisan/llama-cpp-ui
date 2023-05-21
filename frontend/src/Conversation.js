@@ -1,6 +1,5 @@
 import ConversationStep from "./ConversationStep";
-import EmptyConversation from "./EmptyConversation"
-
+//import EmptyConversation from "./EmptyConversation"
 
 export default function Conversation({conversation}) {
     // if (!conversation || !conversation.steps || conversation.steps.length === 0) {

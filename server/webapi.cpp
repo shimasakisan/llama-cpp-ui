@@ -171,8 +171,8 @@ int main(int argc, char** argv) {
 
     setup_http_server(svr, webparams);
 
-    std::cout << "[+] Listening on port 8080\n";
-    svr.listen("127.0.0.1", 8080);
+    std::cout << "[+] Listening on http://" << webparams.host << ":" << webparams.port << "\n\n\n";
+    svr.listen(webparams.host, webparams.port);
 
     session.release_model();
 

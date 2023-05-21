@@ -23,6 +23,16 @@ void parse_webapi_params(int& argc, char* argv[], webapi_params& params) {
             num_parsed_args += 2;
             i++;
         }
+        else if (std::strcmp(argv[i], "--port") == 0 && i + 1 < argc) {
+            params.port = std::atoi(argv[i + 1]);
+            num_parsed_args += 2;
+            i++;
+        }
+        else if (std::strcmp(argv[i], "--host") == 0 && i + 1 < argc) {
+            params.host = argv[i + 1];
+            num_parsed_args += 2;
+            i++;
+        }
         else {
             // move the unknown argument to the front of argv
             argv[i - num_parsed_args] = argv[i];

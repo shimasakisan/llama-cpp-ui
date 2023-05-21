@@ -1,9 +1,9 @@
 
 # llama-cpp-ui
 
-A web API and frontend UI for llama.cpp written in C++. No python or other dependencies needed. Everything is self-contained in a single executable
+A web API and frontend UI for llama.cpp written in C++. No python or other dependencies needed. Everything is self-contained in a single executable, even a basic chat frontend.
 
-![](imgs/sample4.png)
+![](imgs/sample6.png)
 
 
 ## Running
@@ -66,16 +66,6 @@ $ cd llama-cpp-ui
 $ git submodule update
 ```
 
-There is a server and a frontend. To build the server: 
-
-```shell
-$ cd server
-$ mkdir build
-$ cd build
-$ cmake ..
-$ cmake --build . --config Release
-```
-
 The frontend is a react application created with create-react-app: 
 
 ```shell
@@ -92,21 +82,33 @@ $ npm run build
 
 The output ready to be published will be generated in a new `build` directory. 
 
+There is a server and a frontend. To build the server: 
+
+```shell
+$ cd server
+$ mkdir build
+$ cd build
+$ cmake ..
+$ cmake --build . --config Release
+```
+
+
 
 # Sample invocations
 
 ```
---model C:\Users\dsuar\Documents\develop\llama.cpp\models\oasst\llama-13b-pretrained-sft-do2-ggml-q4.bin  --temp 0.1 --threads 8 --ctx_size 2048  --system_prompt "<|system|>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown." --prompt_prefix "<|prompter|>"  --prompt_suffix "<|assistant|>
+--model C:\Users\dsuar\Documents\develop\llama.cpp\models\oasst\llama-13b-pretrained-sft-do2-ggml-q4_1.bin  --temp 0.1 --threads 8 --ctx_size 2048  --system_prompt "<|system|>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown." --prompt_prefix "<|prompter|>"  --prompt_suffix "<|assistant|>
 
-third-party\llama.cpp\examples\main\Release\main.exe --model C:\Users\dsuar\Documents\develop\llama.cpp\models\oasst\llama-13b-pretrained-sft-do2-ggml-q4.bin  --temp 0.1 --threads 8 --ctx_size 2048  --prompt "<|system|>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown.<|prompter|>"  --color --interactive --reverse-prompt "<|prompter|>" --n_predict -1
+third-party\llama.cpp\examples\main\Release\main.exe --model C:\Users\dsuar\Documents\develop\llama.cpp\models\oasst\llama-13b-pretrained-sft-do2-ggml-q4_1.bin  --temp 0.1 --threads 8 --ctx_size 2048  --prompt "<|system|>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown.<|prompter|>"  --color --interactive --reverse-prompt "<|prompter|>" --n_predict -1
 
 webapi.exe --model F:\models\oasst\openassistant-llama-30b-ggml-q4_1.bin  --temp 0.5 --threads 8 --ctx_size 2048  --system_prompt "<|system|>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown." --prompt_prefix "<|user|>"  --prompt_suffix "<|assistant|>"
 
---model F:\models\oasst\llama-13b-pretrained-sft-do2-ggml-q4.bin  --temp 0.5 --threads 8 --ctx_size 2048  --system_prompt "<|system|>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown.<|prompter|>What's the capital of France<|assistant|>Paris<|prompter|>" --prompt_suffix "<|assistant|>
+--model F:\models\oasst\llama-13b-pretrained-sft-do2-ggml-q4_1.bin  --temp 0.5 --threads 8 --ctx_size 2048  --system_prompt "<|system|>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown.<|prompter|>What's the capital of France<|assistant|>Paris<|prompter|>" --prompt_suffix "<|assistant|>
 
 ```
 
 # TO DO
 
 * How to build the single file for the app.
+    * Done, have to document the build process: npm run build before buulding the server.
 * Compilation instructions in different OSs.
