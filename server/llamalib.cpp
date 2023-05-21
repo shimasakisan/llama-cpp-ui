@@ -1,32 +1,11 @@
 #include "llamalib.h"
 
 int LlamaSession::load_model() {
-    auto llama_params = llama_context_default_params();
 
-    llama_params.n_ctx = m_params->n_ctx;
-    llama_params.n_parts = m_params->n_parts;
-    llama_params.seed = m_params->seed;
-    llama_params.f16_kv = m_params->memory_f16;
-    llama_params.use_mmap = m_params->use_mmap;
-    llama_params.use_mlock = m_params->use_mlock;
-
-    m_ctx = llama_init_from_file(m_params->model.c_str(), llama_params);
-        
-    if (m_ctx == NULL) {
-        fprintf(stderr, "[!] Failed to load model '%s'\n", m_params->model.c_str());
-        return 10;
-    }
-
-    if (!m_params->lora_adapter.empty()) {
-        int err = llama_apply_lora_from_file(m_ctx,
-            m_params->lora_adapter.c_str(),
-            m_params->lora_base.empty() ? NULL : m_params->lora_base.c_str(),
-            m_params->n_threads);
-        if (err != 0) {
-            fprintf(stderr, "[!] Failed to apply lora adapter\n");
-            return 11;
-        }
-    }
+    llama_init_backend();
+    m_ctx = llama_init_from_gpt_params(*m_params);
+    
+    m_params->prompt.insert(0, 1, ' ');
 
     // print system information
     {

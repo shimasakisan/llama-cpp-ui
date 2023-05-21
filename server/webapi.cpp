@@ -130,11 +130,6 @@ void setup_http_server(httplib::Server& svr, webapi_params& webparams) {
     svr.Get("/status",  handle_status);
     svr.Get("/cancel",  handle_cancel);
     svr.Get("/", handle_index_html);
-
-    // File server
-    /*if (!webparams.public_directory.empty()) {
-        svr.set_mount_point("/", webparams.public_directory);
-    }*/
 }
 
 int main(int argc, char** argv) {
