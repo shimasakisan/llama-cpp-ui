@@ -8,6 +8,11 @@ int LlamaSession::load_model() {
     m_model = std::get<0>(res);
     m_ctx = std::get<1>(res);
 
+    if (m_params->cfg_scale > 1.f) {
+        struct llama_context_params lparams = llama_context_params_from_gpt_params(*m_params);
+        m_ctx_guidance = llama_new_context_with_model(m_model, lparams);
+    }
+
     if (m_model == NULL) {
         fprintf(stderr, "%s : failed to eval\n", __func__);
         return 1;
@@ -66,7 +71,7 @@ const std::string LlamaSession::predict_next_token() {
     check_past_tokens();
     if (llama_eval(m_ctx, &(m_last_tokens->back()), 1, m_num_past_tokens, m_params->n_threads)) {
         fprintf(stderr, "[!] Failed to eval\n");
-        return NULL;
+        return std::string{};
     }
 
     llama_token predicted_token = 0;
@@ -81,7 +86,8 @@ const std::string LlamaSession::predict_next_token() {
             candidates.emplace_back(llama_token_data{ token_id, logits[token_id], 0.0f });
         }
         llama_token_data_array candidates_p = { candidates.data(), candidates.size(), false };
-        predicted_token = llama_sample_token(m_ctx, &candidates_p);
+        //predicted_token = llama_sample_token(m_ctx, &candidates_p);
+        predicted_token = llama_sample_token(m_ctx, m_ctx_guidance, m_grammar, *m_params, *m_last_tokens, candidates);
         
         //predicted_token = llama_sample_top_p_top_k(m_ctx,
         //    m_last_tokens->data() + llama_n_ctx(m_ctx) - m_params->repeat_last_n,

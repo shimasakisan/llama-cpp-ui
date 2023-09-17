@@ -50,7 +50,9 @@ function App() {
           const parsed = JSON.parse(ev);
           const c0 = parsed && parsed.choices && parsed.choices[0];
           if (!c0) return;
+          console.log(parsed);
           const eventText = c0 && c0.delta && c0.delta.content;
+          if (!eventText) return;
           result += eventText;
         });
       }

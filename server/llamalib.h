@@ -26,6 +26,8 @@ private:
 	void check_past_tokens();
 
 	llama_context* m_ctx = NULL;
+	llama_context* m_ctx_guidance = NULL;
+	struct llama_grammar* m_grammar = NULL;
 	llama_model* m_model = NULL;
 	gpt_params* m_params = NULL;
 	std::vector<llama_token>* m_last_tokens = NULL;
