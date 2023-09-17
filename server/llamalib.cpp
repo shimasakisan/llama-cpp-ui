@@ -3,7 +3,7 @@
 
 int LlamaSession::load_model() {
 
-    llama_init_backend(m_params->numa);
+    llama_backend_init(m_params->numa);
     auto res = llama_init_from_gpt_params(*m_params);
     m_model = std::get<0>(res);
     m_ctx = std::get<1>(res);
@@ -62,7 +62,7 @@ int LlamaSession::process_prompt(const std::string& input) {
     return 0;
 }
 
-const char *LlamaSession::predict_next_token() {
+const std::string LlamaSession::predict_next_token() {
     check_past_tokens();
     if (llama_eval(m_ctx, &(m_last_tokens->back()), 1, m_num_past_tokens, m_params->n_threads)) {
         fprintf(stderr, "[!] Failed to eval\n");
@@ -94,20 +94,20 @@ const char *LlamaSession::predict_next_token() {
     }
 
     // Check for EOS or report the new token
-    if (predicted_token == llama_token_eos()) {
+    if (predicted_token == llama_token_eos(m_ctx)) {
         printf("\n[+] END OF TEXT\n");
-        return NULL;
+        return std::string{};
     }
 
-    auto predicted_text = llama_token_to_str(m_ctx, predicted_token);
-    printf("%s", predicted_text);
+    auto predicted_text = llama_token_to_piece(m_ctx, predicted_token);
+    printf("%s", predicted_text.c_str());
             
     if (is_reverse_prompt()) {
         printf("\n[+] REVERSE PROMPT\n");
-        return NULL;
+        return std::string{};
     }
         
-    return predicted_text;
+    return std::move(predicted_text);
 }
 
 

@@ -73,7 +73,6 @@ void generate_response_for_prompt(
     currentSession->process_prompt(prompt);
 
     fprintf(stderr, "[+] Generating response:\n");
-    const char* token;
     while (true) {
         if (cancel_generation_requested) {
             cancel_generation_requested = false;
@@ -81,8 +80,8 @@ void generate_response_for_prompt(
             onFinish(fr_cancelled);
             break;
         }
-        token = currentSession->predict_next_token();
-        if (token == NULL) {
+        auto token = currentSession->predict_next_token();
+        if (token == std::string{}) {
             onFinish(fr_finish);
             break;
         }

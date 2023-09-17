@@ -12,7 +12,7 @@ public:
 
 	int load_model();
 	int process_prompt(const std::string& input);
-	const char* predict_next_token();
+	const std::string predict_next_token();
 	void release_model();
 
 	void deserialize_state(std::istream input_stream);
