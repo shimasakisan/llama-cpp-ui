@@ -4,3 +4,6 @@
 [submodule "server/third-party/llama.cpp"]
 	path = server/third-party/llama.cpp
 	url = https://github.com/ggerganov/llama.cpp
+[submodule "server/third-party/json"]
+	path = server/third-party/json
+	url = https://github.com/nlohmann/json

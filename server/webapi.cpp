@@ -1,4 +1,8 @@
+// llama2 chat: --model F:\models\llama2\llama-2-7b-chat.Q8_0.gguf  --temp 0.5 --threads 6 --ctx_size 4096 --system_prompt "<<SYS>>You are a helpful assistant. Take a deep breath and explain step by step the reasoning behind your answer.<</SYS>>" --prompt_prefix "[INST]" --prompt_suffix "[/INST]" -ngl 32
+// llama2 chat: --model F:\models\llama2\llama-2-7b-chat.Q8_0.gguf  --temp 0.5 --threads 6 --ctx_size 4096 --system_prompt "<<SYS>>You are a physics genius college teacher, willing to give fun and insightful answers.<</SYS>>" --prompt_prefix "[INST]" --prompt_suffix "[/INST]" -ngl 32
+
 #include "third-party/cpp-httplib/httplib.h"
+#include "third-party/json/single_include/nlohmann/json.hpp"
 #include "llamalib.h"
 #include "webutils.h"
 #include <iostream>
@@ -8,6 +12,9 @@
 #include <common.h>
 #include "webapi.h"
 #include "../frontend/build/index_html.hpp"
+
+
+using json = nlohmann::json;
 
 LlamaSession* currentSession = NULL;
 bool generation_in_progress = false;
@@ -20,81 +27,154 @@ void set_cors_headers(httplib::Response& res)
     res.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 
-void handle_chat(const httplib::Request& req, httplib::Response& res) {
+
+
+void handle_completion_json(const httplib::Request& req, httplib::Response& res) {
+
+}
+
+void handle_models_json(const httplib::Request& req, httplib::Response& res) {
     set_cors_headers(res);
 
-    if (generation_in_progress) {
-        res.status = 403;
-        res.body = "Generation already in progress, discarding.";
-        fprintf(stderr, "\n[!] Generation in progress, discarded prompt: %s\n", req.body.c_str());
-        return;
+    // OpenAI models are required for some frontends to work.
+    json response = {
+        { "data", json::array({
+            {
+                { "id", "gpt-35-turbo" },
+                { "object", "model" },
+                { "owned_by", "organization_owner" },
+                //{ "permission", "model_1" },
+            },
+            {
+                { "id", "gpt-4" },
+                { "object", "model" },
+                { "owned_by", "organization_owner" },
+                //{ "permission", "model_1" },
+            },
+        })}
+    };
+
+    auto r = response.dump(2, ' ', false, json::error_handler_t::replace);
+
+    res.set_content(r, "application/json");
+}
+
+enum finish_reason {
+    fr_cancelled = 10,
+    fr_finish = 11,
+    fr_length = 12
+};
+
+void generate_response_for_prompt(
+        std::string& prompt,
+        std::function<bool(const std::string&)> onNewToken,
+        std::function<void(finish_reason)> onFinish) {
+    
+    generation_in_progress = true;
+
+    fprintf(stderr, "[+] Processing prompt: '%s'\n", prompt.c_str());
+    currentSession->process_prompt(prompt);
+
+    fprintf(stderr, "[+] Generating response:\n");
+    while (true) {
+        if (cancel_generation_requested) {
+            cancel_generation_requested = false;
+            fprintf(stderr, "\n[!] Generation cancelled\n");
+            onFinish(fr_cancelled);
+            break;
+        }
+        auto token = currentSession->predict_next_token();
+        if (token == std::string{}) {
+            onFinish(fr_finish);
+            break;
+        }
+        if (!onNewToken(token)) {
+            onFinish(fr_cancelled);
+            break;
+        }
     }
 
-    // Stream response
-    res.set_chunked_content_provider(
-        "text/plain",
-        [req](size_t offset, httplib::DataSink& sink) {
-            generation_in_progress = true;
-
-            auto prompt = req.body;
-            fprintf(stderr, "[+] Processing prompt: '%s'\n", prompt.c_str());
-            currentSession->process_prompt(prompt);
-
-            fprintf(stderr, "[+] Generating response:\n");
-            const char* token;
-            while (true) {
-                if (cancel_generation_requested) {
-                    cancel_generation_requested = false;
-                    fprintf(stderr, "\n[!] Generation cancelled\n");
-                    sink.write("[Generation cancelled]", 23);
-                    break;
-                }
-                token = currentSession->predict_next_token();
-                if (token == NULL) {
-                    break;
-                }
-
-                sink.write(token, strlen(token));
-            }
-
-            sink.done();
-
-            generation_in_progress = false;
-            return true;
-        }
-    );
+    generation_in_progress = false;
 }
 
-void handle_test(const httplib::Request& req, httplib::Response& res) {
-    
+void handle_chat_json(const httplib::Request& req, httplib::Response& res) {
+    json j = json::parse(req.body);
+
+    std::cout << "[+] REQUEST\n";
+
+    auto temperature = j.contains("temperature") ? j["temperature"].get<float>() : 0.2;
+    auto stream = j.contains("stream") ? j["stream"].get<bool>() : false;
+
+    // We only use the latest message as the prompt.
+    std::string prompt;
+    if (j.contains("messages")) {
+        auto& messages = j["messages"];
+        if (messages.is_array()) {
+            auto& last = messages.back();
+            std::cout << "last: " << last << std::endl;
+            prompt = last["content"].get<std::string>();  // TODO: Check "role" is "user"
+        }
+    }
+
+    /* Event stream format: 
+    https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format
+    */
     set_cors_headers(res);
 
-    // Stream response
-    res.set_chunked_content_provider(
-        "text/plain",
-        [req](size_t offset, httplib::DataSink& sink) {
-            if (generation_in_progress) return true;
-            generation_in_progress = true;
+    if (stream) {
+        res.set_chunked_content_provider("text/event-stream",
+            [prompt](size_t offset, httplib::DataSink& sink) mutable {
+                
+                generate_response_for_prompt(prompt, [&sink](std::string token) {
+                        
+					    json response = {
+				            {"choices", json::array({
+					            {
+						            {"delta",
+							            {
+								            {"content", token}
+							            }
+						            }
+					            }
+				            })}
+					    };
+                        auto payload = "data:" + response.dump(-1, ' ', false, json::error_handler_t::replace) + "\n\n";
+                        sink.write(payload.c_str(), payload.size());
+                        return true;
 
-            for (int i = 1; i < 200; i++) {
-                if (cancel_generation_requested) {
-                    cancel_generation_requested = false;
-                    fprintf(stderr, "\n[!] Generation cancelled\n");
-                    sink.write("[Generation cancelled]", 23);
-                    break;
-                }
-                std::string b("Base ");
-                sink.write(b.c_str(), b.size());
-                std::this_thread::sleep_for(std::chrono::milliseconds(30));
-            }
+                    }, [&sink](finish_reason reason) {
 
-            sink.done();
+                        auto msg = (reason == fr_finish) ? "stop" : "";
 
-            generation_in_progress = false;
-            return true;
-        }
-    );
+                        json response = {
+                            {"choices", json::array({
+                                {
+                                    {"finish_reason", msg}
+                                }
+                            })}
+                        };
+                        auto payload = "data:" + response.dump(-1, ' ', false, json::error_handler_t::replace) + "\n\n";
+                        sink.write(payload.c_str(), payload.size());
+
+                    });
+
+                sink.done();
+                return true;
+            });
+    }
+    else {
+        // The non-streaming thingy
+        std::stringstream result;
+        generate_response_for_prompt(prompt, [&result](std::string token) {
+                result << token;
+                return true;
+            }, [&result](finish_reason reason) {
+                // Build the proper response json from result.str()
+                //res.set_content(response.dump(2, ' ', false, json::error_handler_t::replace), "application/json");
+            });
+    }
 }
+
 
 void handle_cancel(const httplib::Request& req, httplib::Response& res) {
     set_cors_headers(res);
@@ -125,10 +205,11 @@ void setup_http_server(httplib::Server& svr, webapi_params& webparams) {
         });
 
     // Endpoints
-    svr.Post("/chat",   handle_chat);
-    svr.Post("/test",   handle_test);
     svr.Get("/status",  handle_status);
     svr.Get("/cancel",  handle_cancel);
+    svr.Get("/v1/completions", handle_completion_json);
+    svr.Post("/v1/chat/completions", handle_chat_json);
+    svr.Get("/v1/models", handle_models_json);
     svr.Get("/", handle_index_html);
 }
 

@@ -1,10 +1,45 @@
 #include "llamalib.h"
+#include <tuple>
 
 int LlamaSession::load_model() {
 
-    llama_init_backend();
-    m_ctx = llama_init_from_gpt_params(*m_params);
-    
+    llama_backend_init(m_params->numa);
+    auto res = llama_init_from_gpt_params(*m_params);
+    m_model = std::get<0>(res);
+    m_ctx = std::get<1>(res);
+
+    if (m_params->cfg_scale > 1.f) {
+        struct llama_context_params lparams = llama_context_params_from_gpt_params(*m_params);
+        m_ctx_guidance = llama_new_context_with_model(m_model, lparams);
+    }
+
+    if (m_model == NULL) {
+        fprintf(stderr, "%s : failed to eval\n", __func__);
+        return 1;
+    }
+
+    if (!m_params->grammar.empty()) {
+        m_parsed_grammar = &(std::move(grammar_parser::parse(m_params->grammar.c_str())));
+        // will be empty (default) if there are parse errors
+        if (m_parsed_grammar->rules.empty()) {
+            return 1;
+        }
+        LOG_TEE("%s: grammar:\n", __func__);
+        grammar_parser::print_grammar(stderr, *m_parsed_grammar);
+        LOG_TEE("\n");
+
+        {
+            auto it = m_params->logit_bias.find(llama_token_eos(m_ctx));
+            if (it != m_params->logit_bias.end() && it->second == -INFINITY) {
+                LOG_TEE("%s: warning: EOS token is disabled, which will cause most grammars to fail\n", __func__);
+            }
+        }
+
+        std::vector<const llama_grammar_element*> grammar_rules(m_parsed_grammar->c_rules());
+        m_grammar = llama_grammar_init(
+            grammar_rules.data(), grammar_rules.size(), m_parsed_grammar->symbol_ids.at("root"));
+    }
+
     m_params->prompt.insert(0, 1, ' ');
 
     // print system information
@@ -23,6 +58,7 @@ int LlamaSession::load_model() {
 
 void LlamaSession::release_model() {
     llama_free(m_ctx);
+    llama_free_model(m_model);
     if (m_last_tokens != NULL) delete(m_last_tokens);
 }
 
@@ -53,17 +89,16 @@ int LlamaSession::process_prompt(const std::string& input) {
     return 0;
 }
 
-const char *LlamaSession::predict_next_token() {
+const std::string LlamaSession::predict_next_token() {
     check_past_tokens();
     if (llama_eval(m_ctx, &(m_last_tokens->back()), 1, m_num_past_tokens, m_params->n_threads)) {
         fprintf(stderr, "[!] Failed to eval\n");
-        return NULL;
+        return std::string{};
     }
 
     llama_token predicted_token = 0;
 
     {
-        // TODO: This is the most basic sampling possible: use at least temp, top_k, top_p
         auto logits = llama_get_logits(m_ctx);
         auto n_vocab = llama_n_vocab(m_ctx);
         std::vector<llama_token_data> candidates;
@@ -71,42 +106,36 @@ const char *LlamaSession::predict_next_token() {
         for (llama_token token_id = 0; token_id < n_vocab; token_id++) {
             candidates.emplace_back(llama_token_data{ token_id, logits[token_id], 0.0f });
         }
-        llama_token_data_array candidates_p = { candidates.data(), candidates.size(), false };
-        predicted_token = llama_sample_token(m_ctx, &candidates_p);
+        predicted_token = llama_sample_token(m_ctx, m_ctx_guidance, m_grammar, *m_params, *m_last_tokens, candidates);
         
-        //predicted_token = llama_sample_top_p_top_k(m_ctx,
-        //    m_last_tokens->data() + llama_n_ctx(m_ctx) - m_params->repeat_last_n,
-        //    m_params->repeat_last_n, m_params->top_k, m_params->top_p,
-        //    m_params->temp, m_params->repeat_penalty);
-
         m_last_tokens->erase(m_last_tokens->begin());
         m_last_tokens->push_back(predicted_token);        
         m_num_past_tokens++;
     }
 
     // Check for EOS or report the new token
-    if (predicted_token == llama_token_eos()) {
+    if (predicted_token == llama_token_eos(m_ctx)) {
         printf("\n[+] END OF TEXT\n");
-        return NULL;
+        llama_print_timings(m_ctx);
+        return std::string{};
     }
 
-    auto predicted_text = llama_token_to_str(m_ctx, predicted_token);
-    printf("%s", predicted_text);
+    printf("\n[-] token_id: %d: ", predicted_token);
+
+    auto predicted_text = llama_token_to_piece(m_ctx, predicted_token);
+    printf("%s", predicted_text.c_str());
             
     if (is_reverse_prompt()) {
         printf("\n[+] REVERSE PROMPT\n");
-        return NULL;
+        return std::string{};
     }
         
-    return predicted_text;
+    return std::move(predicted_text);
 }
 
 
 void LlamaSession::serialize_state(std::ostream output_stream) {
-    // Save the current llama_state, model_name, m_last_tokens, m_num_past_tokens
-    // Should be enough to quickly load a previous conversation in context.
-
-    // Could save all the conversation under the same filename (not here) for logging purposes.
+    
 }
 
 void LlamaSession::deserialize_state(std::istream input_stream) {

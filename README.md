@@ -2,9 +2,14 @@
 # llama-cpp-ui
 
 A web API and frontend UI for llama.cpp written in C++. No python or other dependencies needed. Everything is self-contained in a single executable, including a basic chat frontend.
+The API aims to be compatible with OpenAI's, but it's not as complete and supports the bare minimum to hold a conversation with streaming.
 
 ![](imgs/sample6.png)
 
+This is meant to be minimal web UI frontend that can be used to play with llama models, kind of a minimal UI for llama.cpp. 
+It supports the same command arguments as the original llama.cpp main example, although sampling parameters can be set via the API as well.
+
+The API is compatible with OpenAI, but is not as complete, only completions and chat completions are supported. Streaming is also supported in chat.
 
 ## Build from sources
 
@@ -16,24 +21,17 @@ $ cd llama-cpp-ui
 $ git submodule update
 ```
 
-The frontend is a react application created with create-react-app: 
+The frontend is a react application created with create-react-app. **You need to generate a build
+to be embedded in the C++ backend**:
 
 ```shell
 $ cd frontend
 $ npm install
-$ npm start
-```
-
-This will start a development server. To create a deployment build: 
-
-```shell
 $ npm run build
+$ cd ..
 ```
 
-The output ready to be published will be generated in a new `build` directory. **This step is required** before building the server,
-since it generates an include file with the contents of the web app to be embedded in the webserver.
-
-There is a server and a frontend. To build the server: 
+To build the server: 
 
 ```shell
 $ cd server
@@ -43,12 +41,11 @@ $ cmake ..
 $ cmake --build . --config Release
 ```
 
-After, this, a single executable `webapi.exe` is generated with the webserver. 
-
+After, this, a single executable `webapi.exe` is generated with the webserver and the single page chat app embedded in it.
 
 # Running
 
-Running the Open Assistant model quantized from https://huggingface.co/dvruette/llama-13b-pretrained-sft-do2 (follow instructions in the llama.cpp repo to get the ggml model format):
+Example using the Open Assistant model quantized from https://huggingface.co/dvruette/llama-13b-pretrained-sft-do2 (follow instructions in the llama.cpp repo to get the ggml model format):
 
 ```
 > webapi.exe --model f:\models\oasst\llama-13b-pretrained-sft-do2-ggml-q4_1.bin  --temp 0.1 --threads 8 --ctx_size 2048  --system_prompt "<|system|>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown." --prompt_prefix "<|prompter|>"  --prompt_suffix "<|assistant|>"
@@ -80,8 +77,24 @@ Initial prompt processed. Ready to accept requests.
 By default the web server will listen on the local interface on port 8080.
 
 
+# Development
+
+To run the frontend in dev mode: 
+
+```shell
+$ cd frontend
+$ npm start
+```
+
+This starts the normal `create-react-app` development server. This frontend will connect to a backend listening on port 
+
+When you are happy with the changes, run `npm run build` to generate a build that is embedded in the server.
+
 # TO DO
 
-* How to build the single file for the app.
-    * Done, have to document the build process: npm run build before buulding the server.
+* Persist state after prompts to support multiple simultaneous conversations while avoiding evaluating the full conversation on every prompt.
+* Implement sampling with temperature, top_p and top_k.
+* Extend webapi to be compatible openai API
+    * Adapt the web chat frontend to use it
 * Compilation instructions in different OSs.
+
