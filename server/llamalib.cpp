@@ -1,10 +1,18 @@
 #include "llamalib.h"
+#include <tuple>
 
 int LlamaSession::load_model() {
 
-    llama_init_backend();
-    m_ctx = llama_init_from_gpt_params(*m_params);
-    
+    llama_init_backend(m_params->numa);
+    auto res = llama_init_from_gpt_params(*m_params);
+    m_model = std::get<0>(res);
+    m_ctx = std::get<1>(res);
+
+    if (m_model == NULL) {
+        fprintf(stderr, "%s : failed to eval\n", __func__);
+        return 1;
+    }
+
     m_params->prompt.insert(0, 1, ' ');
 
     // print system information
@@ -23,6 +31,7 @@ int LlamaSession::load_model() {
 
 void LlamaSession::release_model() {
     llama_free(m_ctx);
+    llama_free_model(m_model);
     if (m_last_tokens != NULL) delete(m_last_tokens);
 }
 
