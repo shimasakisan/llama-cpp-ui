@@ -2,6 +2,7 @@
 # llama-cpp-ui
 
 A web API and frontend UI for llama.cpp written in C++. No python or other dependencies needed. Everything is self-contained in a single executable, including a basic chat frontend.
+The API aims to be compatible with OpenAI's, but it's not as complete and supports the bare minimum to hold a conversation with streaming.
 
 ![](imgs/sample6.png)
 

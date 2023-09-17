@@ -1,3 +1,5 @@
+// llama2 chat: --model F:\models\llama2\llama-2-7b-chat.Q8_0.gguf  --temp 0.5 --threads 6 --ctx_size 4096 --system_prompt "<<SYS>>You are a helpful assistant. You enjoy giving long explanatory answers. Use markdown.<</SYS>>" --prompt_prefix "[INST]" --prompt_suffix "[/INST]" -ngl 32
+
 #include "third-party/cpp-httplib/httplib.h"
 #include "third-party/json/single_include/nlohmann/json.hpp"
 #include "llamalib.h"
