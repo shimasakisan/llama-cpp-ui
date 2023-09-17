@@ -54,7 +54,7 @@ void handle_models_json(const httplib::Request& req, httplib::Response& res) {
         })}
     };
 
-    auto r = response.dump(2);
+    auto r = response.dump(2, ' ', false, json::error_handler_t::replace);
 
     res.set_content(r, "application/json");
 }
@@ -138,7 +138,7 @@ void handle_chat_json(const httplib::Request& req, httplib::Response& res) {
 					            }
 				            })}
 					    };
-                        auto payload = "data:" + response.dump() + "\n\n";
+                        auto payload = "data:" + response.dump(-1, ' ', false, json::error_handler_t::replace) + "\n\n";
                         sink.write(payload.c_str(), payload.size());
                         return true;
 
@@ -153,7 +153,7 @@ void handle_chat_json(const httplib::Request& req, httplib::Response& res) {
                                 }
                             })}
                         };
-                        auto payload = "data:" + response.dump() + "\n\n";
+                        auto payload = "data:" + response.dump(-1, ' ', false, json::error_handler_t::replace) + "\n\n";
                         sink.write(payload.c_str(), payload.size());
 
                     });
@@ -170,7 +170,7 @@ void handle_chat_json(const httplib::Request& req, httplib::Response& res) {
                 return true;
             }, [&result](finish_reason reason) {
                 // Build the proper response json from result.str()
-                //res.set_content(response.dump(2), "application/json");
+                //res.set_content(response.dump(2, ' ', false, json::error_handler_t::replace), "application/json");
             });
     }
 }
