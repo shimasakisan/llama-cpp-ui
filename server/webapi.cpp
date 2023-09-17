@@ -1,4 +1,5 @@
 // llama2 chat: --model F:\models\llama2\llama-2-7b-chat.Q8_0.gguf  --temp 0.5 --threads 6 --ctx_size 4096 --system_prompt "<<SYS>>You are a helpful assistant. Take a deep breath and explain step by step the reasoning behind your answer.<</SYS>>" --prompt_prefix "[INST]" --prompt_suffix "[/INST]" -ngl 32
+// llama2 chat: --model F:\models\llama2\llama-2-7b-chat.Q8_0.gguf  --temp 0.5 --threads 6 --ctx_size 4096 --system_prompt "<<SYS>>You are a physics genius college teacher, willing to give fun and insightful answers.<</SYS>>" --prompt_prefix "[INST]" --prompt_suffix "[/INST]" -ngl 32
 
 #include "third-party/cpp-httplib/httplib.h"
 #include "third-party/json/single_include/nlohmann/json.hpp"

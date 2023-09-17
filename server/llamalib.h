@@ -2,6 +2,7 @@
 
 #include "llama.h"
 #include "common.h"
+#include "grammar-parser.h"
 #include <functional>
 #include <fstream>
 
@@ -28,6 +29,7 @@ private:
 	llama_context* m_ctx = NULL;
 	llama_context* m_ctx_guidance = NULL;
 	struct llama_grammar* m_grammar = NULL;
+	grammar_parser::parse_state* m_parsed_grammar = NULL;
 	llama_model* m_model = NULL;
 	gpt_params* m_params = NULL;
 	std::vector<llama_token>* m_last_tokens = NULL;
