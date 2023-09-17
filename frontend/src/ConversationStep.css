@@ -97,6 +97,9 @@
     }
 }
 
+.Markdown {
+    white-space: pre-wrap;
+}
 
 .Markdown pre {
     background-color: #312e2910;
